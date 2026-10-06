@@ -9,14 +9,6 @@
 static const int DR[8] = { -1, -1,  0, +1, +1, +1,  0, -1 };
 static const int DC[8] = {  0, +1, +1, +1,  0, -1, -1, -1 };
 
-/* Индекс направления от (r0,c0) к (r1,c1). -1 если не сосед. */
-static int dir_index(int r0, int c0, int r1, int c1) {
-    int dr = r1 - r0;
-    int dc = c1 - c0;
-    for (int d = 0; d < 8; d++)
-        if (DR[d] == dr && DC[d] == dc) return d;
-    return -1;
-}
 
 /* Множитель ветра для направления соседа. */
 static double wind_factor_for(const Config *cfg, int wind_dir, int dir) {
@@ -70,7 +62,7 @@ static int can_ignite(const World *w, int r, int c) {
 /* Сколько тактов клетка должна гореть до полного выгорания.
  * Пока просто константа — потом можно завести в конфиг. */
 int fire_burn_ticks(const World *w, int r, int c) {
-    (void)r; (void)c;
+    (void)w; (void)r; (void)c;
     return 6;   /* 6 тактов горения, потом # */
 }
 
@@ -142,5 +134,4 @@ void fire_spread(World *w) {
     }
 
     free(next);
-    w->tick++;
 }

@@ -4,13 +4,13 @@
 size = 8 12
 
 terrain:
-""""""""""""
-"ttt"""tttt"
-"t t""""  t"
-"""tt""ttt""
-""""""""""""
-""tt"""tt"""
-""""""""""""
+"""_w"""""""
+"ttt_w"tttt"
+"t t"_w"  t"
+"""tt"_wtt""
+"""""""_w"""
+""tt"""t_w""
+"""""""""_w"
 ""tt""""tt""
 
 ignition:
@@ -24,6 +24,3 @@ sensors:
 
 station_candidates:
 4 6
-4 5
-3 6
-5 6

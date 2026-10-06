@@ -2,22 +2,32 @@
 #include "map.h"
 #include "world.h"
 #include "render.h"
+#include "fire.h"
 #include "term.h"
 
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
+#include <time.h>
 
 int main(int argc, char **argv) {
+    unsigned seed = (unsigned)time(NULL);
+    for (int i = 1; i < argc; i++) {
+        if (!strcmp(argv[i], "--seed") && i + 1 < argc)
+            seed = (unsigned)strtoul(argv[++i], NULL, 10);
+    }
+    srand(seed);
+    fprintf(stderr, "seed = %u\n", seed);
+
     const char *config_path = "data/conditions.conf";
     const char *map_path    = NULL;
-    int  st_r = -1, st_c = -1;
 
     for (int i = 1; i < argc; i++) {
-        if (!strcmp(argv[i], "--conditions") && i + 1 < argc) {
+        if (!strcmp(argv[i], "--conditions") && i + 1 < argc)
             config_path = argv[++i];
-        } else if (!strcmp(argv[i], "--map") && i + 1 < argc) {
+        else if (!strcmp(argv[i], "--map") && i + 1 < argc)
             map_path = argv[++i];
-        } else {
+        else {
             fprintf(stderr, "Неизвестный аргумент: %s\n", argv[i]);
             return 2;
         }
@@ -34,14 +44,11 @@ int main(int argc, char **argv) {
     MapData map;
     if (map_load(map_path, &map) != 0) return 4;
 
-    /* Пока станцию ставим на первого кандидата, а если его нет — в (0,0). */
+    int st_r, st_c;
     if (map.station_candidates_count > 0) {
         st_r = map.station_candidates[0].r;
         st_c = map.station_candidates[0].c;
-    } else {
-        st_r = 0;
-        st_c = 0;
-    }
+    } else { st_r = 0; st_c = 0; }
 
     World w;
     if (world_init(&w, &map, &cfg, st_r, st_c) != 0) {
@@ -50,7 +57,8 @@ int main(int argc, char **argv) {
         return 5;
     }
 
-    /* Терминал */
+    srand((unsigned)time(NULL));
+
     term_install_signals();
     if (term_raw_mode() != 0) {
         world_free(&w); map_free(&map);
@@ -60,12 +68,15 @@ int main(int argc, char **argv) {
     term_clear();
 
     render_frame(&w);
+    term_sleep_ms(700);
 
-    /* подождать пару секунд или до нажатия q / Ctrl+C */
-    for (int t = 0; t < 40 && !term_should_stop(); t++) {
+    while (!term_should_stop() && w.tick < cfg.end_max_ticks) {
         int k = term_poll_key();
         if (k == 'q') break;
-        term_sleep_ms(50);
+
+        fire_spread(&w);
+        render_frame(&w);
+        term_sleep_ms(300);
     }
 
     term_show_cursor();
@@ -75,6 +86,6 @@ int main(int argc, char **argv) {
     world_free(&w);
     map_free(&map);
 
-    printf("Станция (%d,%d). Готово.\n", st_r + 1, st_c + 1);
+    printf("Тактов: %d. Готово.\n", w.tick);
     return 0;
 }

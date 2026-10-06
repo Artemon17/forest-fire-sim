@@ -20,6 +20,7 @@
 #define C_SENSOR    "\033[38;5;51m"
 #define C_STATION   "\033[38;5;201m"
 #define C_TEAM      "\033[38;5;226m"
+#define C_RESET     "\033[0m"
 
 /* Размер терминала. Возвращает 0 при успехе, -1 если не терминал. */
 int  term_size(int *rows, int *cols);

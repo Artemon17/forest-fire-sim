@@ -1,5 +1,5 @@
 CC      = gcc
-CFLAGS  = -std=c11 -Wall -Wextra -Wpedantic -O2 -g -Iinclude
+CFLAGS  = -std=c11 -Wall -Wextra -Wpedantic -O2 -g -Iinclude -D_POSIX_C_SOURCE=200809L
 SRCS    = $(wildcard src/*.c)
 OBJS    = $(SRCS:.c=.o)
 TARGET  = fire

@@ -62,6 +62,7 @@ int world_init(World *w, const MapData *map, const Config *cfg,
             w->teams[i].target_r       = -1;
             w->teams[i].target_c       = -1;
             w->teams[i].target_task_id = 0;
+            w->teams[i].progress = 0.0;
         }
     }
 

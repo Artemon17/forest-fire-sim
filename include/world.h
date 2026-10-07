@@ -41,6 +41,7 @@ typedef struct {
     TeamState state;
     int       target_r, target_c;
     int       target_task_id;    /* 0 = свободна */
+    double    progress;          /* 0 .. team_extinguish_time */
 } FireTeam;
 
 /* ─── Задача на очаг ──────────────────────────────────── */

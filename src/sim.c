@@ -5,6 +5,7 @@
 #include "sensors.h"
 #include "messages.h"
 #include "center.h"
+#include "teams.h"
 
 #include <string.h>
 
@@ -84,8 +85,11 @@ void sim_tick(World *w) {
     /* phase 3: принятие решений центром    */
     center_tick(w);
 
-    /* phase 4: перемещение групп           — TODO */
-    /* phase 5: тушение                     — TODO */
+    /* phase 4: перемещение групп           */
+    teams_move(w);
+
+    /* phase 5: тушение                      */
+    teams_extinguish(w);
 
     /* phase 6: распространение огня */
     fire_spread(w);

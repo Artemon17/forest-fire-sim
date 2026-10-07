@@ -71,6 +71,15 @@ int world_init(World *w, const MapData *map, const Config *cfg,
     }
 
     w->tick = 0;
+
+    w->next_message_id = 1;
+    w->sensor_reported = calloc((size_t)w->sensors_count *
+                                (size_t)(map->rows * map->cols), 1);
+    if (!w->sensor_reported && w->sensors_count > 0) {
+        world_free(w);
+        return -1;
+    }
+
     log_init(&w->log);
     return 0;
 }
@@ -83,6 +92,10 @@ void world_free(World *w) {
     free(w->burn_age);
     free(w->sensors);
     free(w->teams);
+    free(w->in_flight.items);
+    free(w->inbox.items);
+    free(w->seen_ids);
+    free(w->sensor_reported);
     memset(w, 0, sizeof(*w));
 }
 

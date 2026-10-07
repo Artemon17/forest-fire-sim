@@ -32,6 +32,23 @@ typedef struct {
     /* target, state, progress — добавим в следующих ветках */
 } FireTeam;
 
+
+/* Одно сообщение от датчика. Уникальный id; дубликат несёт тот же id. */
+typedef struct {
+    int id;              /* уникальный номер сообщения      */
+    int sensor_id;       /* какой датчик его создал          */
+    int origin_r, origin_c; /* координаты обнаруженного очага */
+    int created_tick;    /* такт создания                    */
+    int delivery_tick;   /* такт, когда должно прибыть       */
+    int is_duplicate;    /* 1 если это копия в канале        */
+} Message;
+
+typedef struct {
+    Message *items;
+    int      count;
+    int      capacity;
+} MessageQueue;
+
 /*
  * World — состояние мира на текущий прогон.
  * MapData и Config — только для чтения, живут дольше World.
@@ -54,6 +71,15 @@ typedef struct {
     int       teams_count;
 
     EventLog  log;
+
+    /* ── сообщения ── */
+    int          next_message_id;
+    MessageQueue in_flight;      /* сейчас в канале           */
+    MessageQueue inbox;          /* доставлены в центр        */
+    int         *seen_ids;       /* id, уже принятые центром  */
+    int          seen_count;
+    int          seen_cap;
+    unsigned char *sensor_reported; /* [sensor_idx * n_cells + cell] */
 
     int tick;
 } World;

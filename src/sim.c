@@ -3,6 +3,7 @@
 #include "sim.h"
 #include "fire.h"
 #include "sensors.h"
+#include "messages.h"
 
 #include <string.h>
 
@@ -71,10 +72,14 @@ SimResult sim_finished(const World *w) {
 /* ─── Один такт ──────────────────────────────────────── */
 
 void sim_tick(World *w) {
-    /* phase 1: наблюдение датчиками */
+    w->tick++;
+
+    /* phase 1: наблюдение */
     sensors_observe(w);
 
-    /* phase 2: передача сообщений          — TODO */
+    /* phase 2: передача сообщений */
+    messages_tick(w);
+
     /* phase 3: принятие решений центром    — TODO */
     /* phase 4: перемещение групп           — TODO */
     /* phase 5: тушение                     — TODO */
@@ -82,9 +87,7 @@ void sim_tick(World *w) {
     /* phase 6: распространение огня */
     fire_spread(w);
 
-    /* phase 7: публикация — делает render_frame */
-
-    w->tick++;
+    /* phase 7: публикация — render_frame */
 }
 
 /* ─── Печать результата ──────────────────────────────── */

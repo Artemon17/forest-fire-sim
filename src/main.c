@@ -55,7 +55,6 @@ int main(int argc, char **argv) {
     }
 
     srand(seed);
-    fprintf(stderr, "seed = %u\n", seed);
 
     term_install_signals();
     if (term_raw_mode() != 0) {

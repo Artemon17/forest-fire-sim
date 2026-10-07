@@ -71,6 +71,7 @@ int world_init(World *w, const MapData *map, const Config *cfg,
     }
 
     w->tick = 0;
+    log_init(&w->log);
     return 0;
 }
 

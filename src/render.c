@@ -37,8 +37,8 @@ void render_frame(const World *w) {
 
     /* подсчитать состояния */
     int burning = 0, burnt = 0, ext = 0;
-    int n = w->map->rows * w->map->cols;
-    for (int i = 0; i < n; i++) {
+    int total_cells = w->map->rows * w->map->cols;
+    for (int i = 0; i < total_cells; i++) {
         if      (w->state[i] == ST_BURNING)      burning++;
         else if (w->state[i] == ST_BURNT)        burnt++;
         else if (w->state[i] == ST_EXTINGUISHED) ext++;
@@ -72,6 +72,18 @@ void render_frame(const World *w) {
     }
 
     APPEND("────────────────────────────────────────\n");
+
+    APPEND("События:\n");
+
+    LogEvent last[8];
+    int n = log_last_n(&w->log, 8, last);
+    if (n == 0) {
+        APPEND("  (пока тихо)\n");
+    } else {
+        for (int i = 0; i < n; i++) {
+            APPEND("  [%d] %s\n", last[i].tick, last[i].text);
+        }
+    }
 
     #undef APPEND
 

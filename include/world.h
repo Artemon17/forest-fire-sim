@@ -3,6 +3,7 @@
 
 #include "config.h"
 #include "map.h"
+#include "log.h"
 
 /* Состояние пожара на клетке. */
 typedef enum {
@@ -39,18 +40,20 @@ typedef struct {
     const MapData *map;
     const Config  *cfg;
 
-    int st_r, st_c;            /* позиция станции в этом прогоне */
+    int st_r, st_c;
 
-    FireState *state;          /* rows*cols */
-    Occupant  *occupant;       /* rows*cols */
-    int       *team_id;        /* rows*cols, 0 = нет команды */
-    int       *burn_age;       /* rows*cols, -1 = не горит, иначе такт возгорания */
+    FireState *state;
+    Occupant  *occupant;
+    int       *team_id;
+    int       *burn_age;
 
     Sensor   *sensors;
     int       sensors_count;
 
     FireTeam *teams;
     int       teams_count;
+
+    EventLog  log;
 
     int tick;
 } World;

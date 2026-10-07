@@ -2,6 +2,7 @@
 
 #include "sim.h"
 #include "fire.h"
+#include "sensors.h"
 
 #include <string.h>
 
@@ -70,23 +71,20 @@ SimResult sim_finished(const World *w) {
 /* ─── Один такт ──────────────────────────────────────── */
 
 void sim_tick(World *w) {
-    /*
-     * Порядок фаз строго фиксирован заданием.
-     * Пока реализована только последняя — распространение огня.
-     * Остальные появятся в своих ветках.
-     */
+    /* phase 1: наблюдение датчиками */
+    sensors_observe(w);
 
-    /* phase 1: наблюдение датчиками        — TODO (feature/sensors)  */
-    /* phase 2: передача сообщений          — TODO (feature/messages) */
-    /* phase 3: принятие решений центром    — TODO (feature/center)   */
-    /* phase 4: перемещение групп           — TODO (feature/teams)    */
-    /* phase 5: тушение                     — TODO (feature/teams)    */
+    /* phase 2: передача сообщений          — TODO */
+    /* phase 3: принятие решений центром    — TODO */
+    /* phase 4: перемещение групп           — TODO */
+    /* phase 5: тушение                     — TODO */
 
     /* phase 6: распространение огня */
     fire_spread(w);
-    w->tick++;
 
-    /* phase 7: публикация состояния — делает render_frame, здесь нет */
+    /* phase 7: публикация — делает render_frame */
+
+    w->tick++;
 }
 
 /* ─── Печать результата ──────────────────────────────── */

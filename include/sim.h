@@ -22,4 +22,8 @@ SimResult sim_finished(const World *w);
 /* Строковое имя результата. */
 const char *sim_result_name(SimResult r);
 
+/* Прогнать полную симуляцию до завершения (без интерактива).
+ * Возвращает результат; итоговый такт — в w->tick. */
+SimResult sim_run(World *w);
+
 #endif

@@ -110,3 +110,12 @@ const char *sim_result_name(SimResult r) {
     }
     return "?";
 }
+
+SimResult sim_run(World *w) {
+    SimResult r = sim_finished(w);
+    while (r == RESULT_RUNNING) {
+        sim_tick(w);
+        r = sim_finished(w);
+    }
+    return r;
+}

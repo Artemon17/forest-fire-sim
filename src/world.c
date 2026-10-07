@@ -33,10 +33,10 @@ int world_init(World *w, const MapData *map, const Config *cfg,
         w->burn_age[i] = -1;
     }
 
-    /* станция */
+    /* ── станция ── */
     w->occupant[st_r * map->cols + st_c] = OCC_STATION;
 
-    /* датчики */
+    /* ── датчики ── */
     w->sensors_count = map->sensors_count;
     if (w->sensors_count > 0) {
         w->sensors = calloc((size_t)w->sensors_count, sizeof(Sensor));
@@ -49,19 +49,23 @@ int world_init(World *w, const MapData *map, const Config *cfg,
         }
     }
 
-    /* команды — пока все на станции, отдельных пометок на карте не делаем */
+    /* ── группы ── */
     w->teams_count = cfg->team_count;
     if (w->teams_count > 0) {
         w->teams = calloc((size_t)w->teams_count, sizeof(FireTeam));
         if (!w->teams) { world_free(w); return -1; }
         for (int i = 0; i < w->teams_count; i++) {
-            w->teams[i].id = i + 1;
-            w->teams[i].r  = st_r;
-            w->teams[i].c  = st_c;
+            w->teams[i].id             = i + 1;
+            w->teams[i].r              = st_r;
+            w->teams[i].c              = st_c;
+            w->teams[i].state          = TEAM_IDLE;
+            w->teams[i].target_r       = -1;
+            w->teams[i].target_c       = -1;
+            w->teams[i].target_task_id = 0;
         }
     }
 
-    /* начальные очаги */
+    /* ── начальные очаги ── */
     for (int i = 0; i < map->ignition_count; i++) {
         int r = map->ignition[i].r;
         int c = map->ignition[i].c;
@@ -70,8 +74,7 @@ int world_init(World *w, const MapData *map, const Config *cfg,
         w->burn_age[idx] = 0;
     }
 
-    w->tick = 0;
-
+    /* ── сообщения ── */
     w->next_message_id = 1;
     w->sensor_reported = calloc((size_t)w->sensors_count *
                                 (size_t)(map->rows * map->cols), 1);
@@ -80,7 +83,13 @@ int world_init(World *w, const MapData *map, const Config *cfg,
         return -1;
     }
 
+    /* ── задачи ── */
+    w->next_task_id = 1;
+
+    /* ── журнал ── */
     log_init(&w->log);
+
+    w->tick = 0;
     return 0;
 }
 
@@ -96,6 +105,7 @@ void world_free(World *w) {
     free(w->inbox.items);
     free(w->seen_ids);
     free(w->sensor_reported);
+    free(w->tasks.items);
     memset(w, 0, sizeof(*w));
 }
 
@@ -114,7 +124,7 @@ CellView world_cell_view(const World *w, int r, int c) {
     switch (w->state[idx]) {
         case ST_BURNING:      cv.state = 'F'; break;
         case ST_BURNT:        cv.state = '#'; break;
-        case ST_EXTINGUISHED: cv.state = ' '; break;  /* показываем terrain */
+        case ST_EXTINGUISHED: cv.state = ' '; break;
         default:              cv.state = ' '; break;
     }
 

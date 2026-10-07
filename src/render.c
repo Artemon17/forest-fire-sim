@@ -38,7 +38,7 @@ void render_frame(const World *w) {
     if (term_size(&trows, &tcols) != 0) {
         trows = 40;  /* не терминал — берём с запасом */
     }
-    int overhead = 5;                          /* шапка, 2 разделителя, «События:», запас */
+    int overhead = 6;                          /* шапка, 2 разделителя, «События:», запас */
     int available = trows - overhead - w->map->rows;
     if (available < 0)   available = 0;
     if (available > 8)   available = 8;        /* не больше восьми в любом случае */
@@ -85,6 +85,20 @@ void render_frame(const World *w) {
            w->inbox.count);
     ENDL();
 
+    int pend = 0, in_prog = 0;
+    for (int i = 0; i < w->tasks.count; i++) {
+        if      (w->tasks.items[i].state == TASK_PENDING)  pend++;
+        else if (w->tasks.items[i].state == TASK_ASSIGNED ||
+                 w->tasks.items[i].state == TASK_IN_PROGRESS) in_prog++;
+    }
+    int busy = 0;
+    for (int i = 0; i < w->teams_count; i++)
+        if (w->teams[i].target_task_id != 0) busy++;
+
+    APPEND("Задачи: всего %d, ждут %d, в работе %d | Группы: занято %d из %d",
+           w->tasks.count, pend, in_prog, busy, w->teams_count);
+    ENDL();
+    
     APPEND("──────────────────────────────────────────────────────────");
     ENDL();
 

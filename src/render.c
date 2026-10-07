@@ -119,7 +119,7 @@ void render_frame(const World *w) {
             CellView cv = world_cell_view(w, r, c);
             char sym = world_display_symbol(&cv);
             const char *col = color_for(sym);
-            APPEND("%s%c%s  ", col, sym, C_RESET);
+            APPEND("%s%c%s ", col, sym, C_RESET);
         }
         ENDL();
     }

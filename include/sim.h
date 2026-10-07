@@ -7,7 +7,6 @@
 typedef enum {
     RESULT_RUNNING = 0,       /* ещё идёт, не финал */
     RESULT_EXTINGUISHED,      /* пожар потушен */
-    RESULT_OUT_OF_BOUNDS,     /* огонь вышел за границу контроля */
     RESULT_TERRITORY_EXHAUSTED,/* всё, что могло, выгорело */
     RESULT_TICK_LIMIT,        /* достигнут end.max_ticks */
     RESULT_INTERRUPTED        /* Ctrl+C */

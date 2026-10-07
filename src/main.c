@@ -113,7 +113,7 @@ static SimResult run_interactive(World *w, const Options *o) {
         term_show_cursor();
         term_reset_color();
         term_restore_mode();
-        term_clear();
+
     }
     return r;
 }
@@ -165,9 +165,9 @@ static int do_single(const Options *o, const MapData *map, const Config *cfg) {
     else                r = run_quiet(&w);
 
     int ticks = w.tick;
-
-    if (!o->show_frames)
-        print_result(o->map_path, o->config_path, st_r, st_c, r, ticks, o->seed);
+    
+    printf("\n");
+    print_result(o->map_path, o->config_path, st_r, st_c, r, ticks, o->seed);
 
     world_free(&w);
     return 0;

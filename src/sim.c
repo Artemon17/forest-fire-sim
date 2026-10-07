@@ -31,34 +31,14 @@ static int count_flammable_safe(const World *w) {
     return c;
 }
 
-/* Есть ли огонь на границе карты — грубая проверка «выхода». */
-static int fire_on_border(const World *w) {
-    int R = w->map->rows, C = w->map->cols;
-    for (int r = 0; r < R; r++) {
-        if (w->state[r * C + 0] == ST_BURNING)      return 1;
-        if (w->state[r * C + (C - 1)] == ST_BURNING) return 1;
-    }
-    for (int c = 0; c < C; c++) {
-        if (w->state[0 * C + c] == ST_BURNING)      return 1;
-        if (w->state[(R - 1) * C + c] == ST_BURNING) return 1;
-    }
-    return 0;
-}
 
 /* ─── Условия завершения ─────────────────────────────── */
 
 SimResult sim_finished(const World *w) {
-    /* 1. Пожар потушен? */
     if (count_burning(w) == 0) {
         return RESULT_EXTINGUISHED;
     }
 
-    /* 2. Огонь вышел за границу? */
-    if (fire_on_border(w)) {
-        return RESULT_OUT_OF_BOUNDS;
-    }
-
-    /* 3. Больше нечему гореть? */
     if (count_flammable_safe(w) == 0) {
         return RESULT_TERRITORY_EXHAUSTED;
     }
@@ -103,7 +83,6 @@ const char *sim_result_name(SimResult r) {
     switch (r) {
         case RESULT_RUNNING:              return "RUNNING";
         case RESULT_EXTINGUISHED:         return "EXTINGUISHED";
-        case RESULT_OUT_OF_BOUNDS:        return "OUT_OF_BOUNDS";
         case RESULT_TERRITORY_EXHAUSTED:  return "TERRITORY_EXHAUSTED";
         case RESULT_TICK_LIMIT:           return "TICK_LIMIT";
         case RESULT_INTERRUPTED:          return "INTERRUPTED";

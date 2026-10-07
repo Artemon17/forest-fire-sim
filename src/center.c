@@ -76,10 +76,24 @@ static void center_consume_inbox(World *w) {
     w->inbox.count = 0;
 }
 
+
+
+
 static void center_assign_teams(World *w) {
     for (int i = 0; i < w->tasks.count; i++) {
         Task *t = &w->tasks.items[i];
         if (t->state != TASK_PENDING) continue;
+
+        /* Если очаг уже не горит — задача отменена, не тратим группу */
+        int idx = t->r * w->map->cols + t->c;
+        if (w->state[idx] != ST_BURNING) {
+            t->state = TASK_CANCELLED;
+            t->completed_tick = w->tick;
+            log_add(&w->log, w->tick,
+                    "Центр: задача #%d отменена до назначения — (%d,%d) уже не горит",
+                    t->id, t->r + 1, t->c + 1);
+            continue;
+        }
 
         /* ближайшая свободная группа (Манхэттен) */
         int best_j = -1;
@@ -91,10 +105,7 @@ static void center_assign_teams(World *w) {
             if (d < best_d) { best_d = d; best_j = j; }
         }
 
-        if (best_j < 0) {
-            /* все группы заняты, задача ждёт */
-            continue;
-        }
+        if (best_j < 0) continue;
 
         FireTeam *tm = &w->teams[best_j];
         tm->target_task_id = t->id;
@@ -102,7 +113,7 @@ static void center_assign_teams(World *w) {
         tm->target_c       = t->c;
         tm->state          = TEAM_MOVING;
 
-        t->state           = TASK_ASSIGNED;
+        t->state            = TASK_ASSIGNED;
         t->assigned_team_id = tm->id;
 
         log_add(&w->log, w->tick,
@@ -110,6 +121,7 @@ static void center_assign_teams(World *w) {
                 t->id, tm->id, best_d);
     }
 }
+
 
 void center_tick(World *w) {
     center_consume_inbox(w);

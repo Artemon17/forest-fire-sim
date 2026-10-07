@@ -69,6 +69,8 @@ int world_init(World *w, const MapData *map, const Config *cfg,
             w->teams[i].target_c       = -1;
             w->teams[i].target_task_id = 0;
             w->teams[i].progress       = 0.0;
+            w->teams[i].last_report_r  = -1;
+            w->teams[i].last_report_c  = -1;
         }
     }
 
@@ -135,6 +137,11 @@ CellView world_cell_view(const World *w, int r, int c) {
         default:              cv.state = ' '; break;
     }
 
+    if (r == w->st_r && c == w->st_c) {
+        cv.occupant = 'S';
+        return cv;
+    }
+
     switch (w->occupant[idx]) {
         case OCC_SENSOR:  cv.occupant = '.'; break;
         case OCC_STATION: cv.occupant = 'S'; break;
@@ -143,9 +150,8 @@ CellView world_cell_view(const World *w, int r, int c) {
             cv.occupant = (tid >= 1 && tid <= 9) ? (char)('0' + tid) : 'T';
             break;
         }
-        default:          cv.occupant = ' '; break;
+        default: cv.occupant = ' '; break;
     }
-
     return cv;
 }
 

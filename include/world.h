@@ -40,8 +40,12 @@ typedef struct {
     int       r, c;
     TeamState state;
     int       target_r, target_c;
-    int       target_task_id;    /* 0 = свободна */
-    double    progress;          /* 0 .. team_extinguish_time */
+    int       target_task_id;
+    double    progress;
+
+    /* последняя клетка, о которой группа сообщала как датчик */
+    int       last_report_r;
+    int       last_report_c;
 } FireTeam;
 
 /* ─── Задача на очаг ──────────────────────────────────── */

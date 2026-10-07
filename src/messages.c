@@ -105,6 +105,41 @@ void messages_send(World *w, int sensor_idx, int origin_r, int origin_c) {
     }
 }
 
+void messages_send_team(World *w, int team_id, int r, int c) {
+    const Config *cfg = w->cfg;
+
+    if (rnd01() < cfg->msg_loss_prob) {
+        log_add(&w->log, w->tick,
+                "Сообщение от группы #%d потеряно в канале", team_id);
+        return;
+    }
+
+    int delay = rnd_range(cfg->msg_delay_min, cfg->msg_delay_max);
+
+    Message m;
+    m.id            = w->next_message_id++;
+    m.sensor_id     = 100 + team_id;   /* 100+ помечает команду */
+    m.origin_r      = r;
+    m.origin_c      = c;
+    m.created_tick  = w->tick;
+    m.delivery_tick = w->tick + delay;
+    m.is_duplicate  = 0;
+
+    queue_push(&w->in_flight, &m);
+
+    log_add(&w->log, w->tick,
+            "Группа #%d шлёт сообщение #%d о (%d,%d), задержка %d",
+            team_id, m.id, r + 1, c + 1, delay);
+
+    if (rnd01() < cfg->msg_dup_prob) {
+        Message dup = m;
+        dup.is_duplicate = 1;
+        queue_push(&w->in_flight, &dup);
+        log_add(&w->log, w->tick,
+                "Сообщение #%d продублировано в канале", m.id);
+    }
+}
+
 /* ─── Фаза 2: продвижение и доставка ──────────────────── */
 
 void messages_tick(World *w) {

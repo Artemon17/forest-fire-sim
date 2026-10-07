@@ -55,26 +55,15 @@ SimResult sim_finished(const World *w) {
 
 void sim_tick(World *w) {
     w->tick++;
-
-    /* phase 1: наблюдение */
+    
     sensors_observe(w);
+    teams_observe(w);
 
-    /* phase 2: передача сообщений */
     messages_tick(w);
-
-    /* phase 3: принятие решений центром    */
     center_tick(w);
-
-    /* phase 4: перемещение групп           */
     teams_move(w);
-
-    /* phase 5: тушение                      */
     teams_extinguish(w);
-
-    /* phase 6: распространение огня */
     fire_spread(w);
-
-    /* phase 7: публикация — render_frame */
 }
 
 /* ─── Печать результата ──────────────────────────────── */

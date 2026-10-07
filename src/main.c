@@ -128,18 +128,102 @@ static SimResult run_quiet(World *w) {
 
 static void print_result(const char *map_path, const char *config_path,
                          int st_r, int st_c,
-                         SimResult r, int ticks, unsigned seed)
+                         SimResult r, const World *w, unsigned seed)
 {
+    /* Считаем всё, что нужно для расшифровки */
+    int R = w->map->rows, C = w->map->cols;
+    int total = R * C;
+
+    int burning = 0, burnt = 0, ext = 0, safe = 0;
+    int flammable_total = 0, flammable_untouched = 0;
+    for (int i = 0; i < total; i++) {
+        Terrain t = w->map->cells[i];
+        int flammable = (t != TERRAIN_WATER && t != TERRAIN_FIREBREAK);
+        if (flammable) flammable_total++;
+        switch (w->state[i]) {
+            case ST_BURNING:      burning++; break;
+            case ST_BURNT:        burnt++;   break;
+            case ST_EXTINGUISHED: ext++;     break;
+            case ST_SAFE:
+                safe++;
+                if (flammable) flammable_untouched++;
+                break;
+        }
+    }
+
+    int tasks_done = 0, tasks_cancelled = 0, tasks_pending = 0, tasks_active = 0;
+    for (int i = 0; i < w->tasks.count; i++) {
+        switch (w->tasks.items[i].state) {
+            case TASK_DONE:        tasks_done++;      break;
+            case TASK_CANCELLED:   tasks_cancelled++; break;
+            case TASK_PENDING:     tasks_pending++;   break;
+            case TASK_ASSIGNED:
+            case TASK_IN_PROGRESS: tasks_active++;    break;
+        }
+    }
+
+    /* Текстовая расшифровка */
+    const char *verdict;
+    switch (r) {
+        case RESULT_EXTINGUISHED:
+            verdict = "Пожар полностью ликвидирован";
+            break;
+        case RESULT_TERRITORY_EXHAUSTED:
+            verdict = "Всё, что могло гореть, выгорело";
+            break;
+        case RESULT_TICK_LIMIT:
+            verdict = "Лимит тактов исчерпан, пожар не потушен";
+            break;
+        case RESULT_INTERRUPTED:
+            verdict = "Симуляция прервана пользователем";
+            break;
+        default:
+            verdict = "—";
+            break;
+    }
+
     printf("────────── ИТОГ ──────────\n");
     printf("Карта:      %s\n", map_path);
     printf("Условия:    %s\n", config_path);
     printf("Станция:    (%d,%d)\n", st_r + 1, st_c + 1);
-    printf("Результат:  %s\n", sim_result_name(r));
-    printf("Тактов:     %d\n", ticks);
+    printf("Результат:  %s — %s\n", sim_result_name(r), verdict);
+    printf("Тактов:     %d\n", w->tick);
     printf("seed:       %u\n", seed);
+    printf("\n");
+    printf("── Состояние карты ──\n");
+    printf("  Всего клеток:          %d\n", total);
+    printf("  Из них горючих:        %d\n", flammable_total);
+    printf("  Негорючих (вода/ров):  %d\n", total - flammable_total);
+    printf("  Выгорело (#):          %d\n", burnt);
+    printf("  Потухло группами:      %d\n", ext);
+    printf("  Осталось нетронуто:    %d\n", flammable_untouched);
+    printf("  Горит на момент стопа: %d\n", burning);
+    printf("  Не занято огнём:       %d%%\n",
+           flammable_total > 0
+               ? (100 * (flammable_total - burnt)) / flammable_total
+               : 100);
+    printf("\n");
+    printf("── Задачи ──\n");
+    printf("  Всего создано:  %d\n", w->tasks.count);
+    printf("  Закрыто:        %d\n", tasks_done);
+    printf("  Отменено:       %d\n", tasks_cancelled);
+    printf("  Ждут:           %d\n", tasks_pending);
+    printf("  В работе:       %d\n", tasks_active);
+    printf("\n");
+    printf("── Группы ──\n");
+    printf("  Всего:          %d\n", w->teams_count);
+    int back_home = 0;
+    for (int i = 0; i < w->teams_count; i++)
+        if (w->teams[i].state == TEAM_IDLE &&
+            w->teams[i].r == w->st_r &&
+            w->teams[i].c == w->st_c) back_home++;
+    printf("  На станции:     %d\n", back_home);
+    printf("\n");
+    printf("── Сообщения ──\n");
+    printf("  Доставлено:     %d\n", w->inbox.count);
+    printf("  В пути:         %d\n", w->in_flight.count);
     printf("──────────────────────────\n");
 }
-
 /* ─── Режим одиночной станции ─────────────────────────── */
 
 static int do_single(const Options *o, const MapData *map, const Config *cfg) {
@@ -163,12 +247,9 @@ static int do_single(const Options *o, const MapData *map, const Config *cfg) {
     SimResult r;
     if (o->show_frames) r = run_interactive(&w, o);
     else                r = run_quiet(&w);
-
-    int ticks = w.tick;
     
     printf("\n");
-    print_result(o->map_path, o->config_path, st_r, st_c, r, ticks, o->seed);
-
+    print_result(o->map_path, o->config_path, st_r, st_c, r, &w, o->seed);
     world_free(&w);
     return 0;
 }
@@ -179,6 +260,8 @@ typedef struct {
     int       r, c;
     SimResult result;
     int       ticks;
+    int       burnt;
+    int       ext;
 } ScanRow;
 
 static int do_scan(const Options *o, const MapData *map, const Config *cfg) {
@@ -202,6 +285,8 @@ static int do_scan(const Options *o, const MapData *map, const Config *cfg) {
             rows[i].r = sr; rows[i].c = sc;
             rows[i].result = RESULT_INTERRUPTED;
             rows[i].ticks = -1;
+            rows[i].burnt = 0;
+            rows[i].ext = 0;
             continue;
         }
         srand(o->seed);   /* одинаковый поток случайностей для всех */
@@ -210,10 +295,20 @@ static int do_scan(const Options *o, const MapData *map, const Config *cfg) {
         rows[i].c = sc;
         rows[i].result = r;
         rows[i].ticks  = w.tick;
+
+        int burnt = 0, ext = 0;
+        for (int j = 0; j < w.map->rows * w.map->cols; j++) {
+            if (w.state[j] == ST_BURNT) burnt++;
+            else if (w.state[j] == ST_EXTINGUISHED) ext++;
+        }
+        rows[i].burnt = burnt;
+        rows[i].ext = ext;
+
         world_free(&w);
 
-        printf("  (%2d,%2d): %-20s %d тактов\n",
-               sr + 1, sc + 1, sim_result_name(r), w.tick);
+        printf("  (%2d,%2d): %-20s %4d тактов  выгорело %3d  потушено %3d\n",
+       sr + 1, sc + 1, sim_result_name(r), rows[i].ticks,
+       rows[i].burnt, rows[i].ext);
     }
 
     /* лучший результат */

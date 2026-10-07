@@ -84,10 +84,17 @@ void messages_send(World *w, int sensor_idx, int origin_r, int origin_c) {
 
     queue_push(&w->in_flight, &m);
 
-    log_add(&w->log, w->tick,
-            "Датчик #%d шлёт сообщение #%d о (%d,%d), задержка %d",
-            s->id, m.id, origin_r + 1, origin_c + 1, delay);
-
+    const char *who = (s->r == w->st_r && s->c == w->st_c) ? "Станция" : "Датчик";
+    if (s->r == w->st_r && s->c == w->st_c) {
+        log_add(&w->log, w->tick,
+                "Станция шлёт сообщение #%d о (%d,%d), задержка %d",
+                m.id, origin_r + 1, origin_c + 1, delay);
+    } else {
+        log_add(&w->log, w->tick,
+                "Датчик #%d шлёт сообщение #%d о (%d,%d), задержка %d",
+                s->id, m.id, origin_r + 1, origin_c + 1, delay);
+    }
+    (void)who;
     /* дублирование */
     if (rnd01() < cfg->msg_dup_prob) {
         Message dup = m;

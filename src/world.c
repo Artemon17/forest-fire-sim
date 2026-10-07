@@ -36,18 +36,24 @@ int world_init(World *w, const MapData *map, const Config *cfg,
     /* ── станция ── */
     w->occupant[st_r * map->cols + st_c] = OCC_STATION;
 
-    /* ── датчики ── */
-    w->sensors_count = map->sensors_count;
-    if (w->sensors_count > 0) {
-        w->sensors = calloc((size_t)w->sensors_count, sizeof(Sensor));
-        if (!w->sensors) { world_free(w); return -1; }
-        for (int i = 0; i < w->sensors_count; i++) {
-            w->sensors[i].id = i + 1;
-            w->sensors[i].r  = map->sensors[i].r;
-            w->sensors[i].c  = map->sensors[i].c;
-            w->occupant[w->sensors[i].r * map->cols + w->sensors[i].c] = OCC_SENSOR;
-        }
+
+    int map_sensor_count = map->sensors_count;
+    w->sensors_count = map_sensor_count + 1;
+    w->sensors = calloc((size_t)w->sensors_count, sizeof(Sensor));
+    if (!w->sensors) { world_free(w); return -1; }
+
+    for (int i = 0; i < map_sensor_count; i++) {
+        w->sensors[i].id = i + 1;
+        w->sensors[i].r  = map->sensors[i].r;
+        w->sensors[i].c  = map->sensors[i].c;
+        w->occupant[w->sensors[i].r * map->cols + w->sensors[i].c] = OCC_SENSOR;
     }
+
+    /* станция как датчик — последняя запись */
+    w->sensors[map_sensor_count].id = map_sensor_count + 1;
+    w->sensors[map_sensor_count].r  = st_r;
+    w->sensors[map_sensor_count].c  = st_c;
+    /* намеренно НЕ ставим OCC_SENSOR: пусть клетка остаётся OCC_STATION */
 
     /* ── группы ── */
     w->teams_count = cfg->team_count;
@@ -62,7 +68,7 @@ int world_init(World *w, const MapData *map, const Config *cfg,
             w->teams[i].target_r       = -1;
             w->teams[i].target_c       = -1;
             w->teams[i].target_task_id = 0;
-            w->teams[i].progress = 0.0;
+            w->teams[i].progress       = 0.0;
         }
     }
 
